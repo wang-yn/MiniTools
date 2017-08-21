@@ -12,33 +12,36 @@ namespace MiniBuild
     {
         static void Main(string[] args)
         {
-            var options = new Options();
+            
+            Options options = new Options();
             if( CommandLine.Parser.Default.ParseArgumentsStrict(args, options) == false ) {
                 return;
             }
 
-            //Console.WriteLine(options.SolutionFile);
-            //Console.WriteLine(options.Configuration);
-            //Console.WriteLine(options.Target);
-            //Console.WriteLine(options.DebugMode);
+            // 安装模式
+            if( options.Setup ) {
+                Setup();
+                Console.WriteLine("右键菜单安装成功");
+                return;
+            }
 
-            //Console.WriteLine(new string('-', 20));
+            if( string.IsNullOrEmpty(options.SolutionFile) ) {
+                Console.WriteLine("解决方案文件名不能为空。");
+                Console.WriteLine(CommandLine.Text.HelpText.AutoBuild(options).ToString());
+                return;
+            }
 
-            //Console.WriteLine("System Path Is:");
-            //foreach( var p in DirectoryHelper.GetSystemPath() )
-            //    Console.WriteLine(p);
+            string msbuildpath = FileSearch.Search("msbuild.exe");
 
-            var msbuildpath = FileSearch.GetFullPath("msbuild.exe");
-            //Console.WriteLine(msbuildpath);
+            List<string> pms = new List<string> {
+                "/t:" + options.Target,
+                "/p:Configuration=" + options.Configuration,
+                options.SolutionFile
+            };
 
-            var pms = new List<string>();
-            pms.Add("/t:" + options.Target);
-            pms.Add("/p:Configuration=" + options.Configuration);
-            pms.Add(options.SolutionFile);
+            string paramString = string.Join(" ", pms);
 
-            var paramString = string.Join(" ", pms);
-
-            var result = CommandLineHelper.Execute(msbuildpath, paramString, true);
+            ExecuteResult result = CommandLineHelper.Execute(msbuildpath, paramString, true);
             Console.WriteLine(result.CommandLine);
 
             if( result.ExitCode == 0 ) {
@@ -56,29 +59,17 @@ namespace MiniBuild
             if( options.Slient == false )
                 Console.ReadLine();
         }
-    }
 
-    static class FileSearch
-    {
-        private static string[] s_searchFolders = new[] {
-            Path.Combine(Environment.GetFolderPath( Environment.SpecialFolder.ProgramFilesX86),"MSBuild\\14.0\\Bin"),
-            Path.Combine(Environment.GetFolderPath( Environment.SpecialFolder.ProgramFilesX86),"Microsoft Visual Studio\\2017\\Enterprise\\MSBuild\\15.0\\Bin"),
-        };
-
-        /// <summary>
-        /// 从一组文件路径中找到有该文件的路径
-        /// </summary>
-        /// <param name="filename"></param>
-        /// <returns></returns>
-        public static string GetFullPath(string filename)
+        private static void Setup()
         {
-            foreach( var folder in s_searchFolders ) {
-                var fullpath = Path.Combine(folder, filename);
-                if( File.Exists(fullpath) )
-                    return fullpath;
-            }
-
-            return string.Empty;
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MiniBuild.exe");
+            string cmd = path + " -s \"%1\"";
+            RegistryHelper.Write(@"VisualStudio.Launcher.sln\Shell\MiniBuild", null, "一键编译");
+            RegistryHelper.Write(@"VisualStudio.Launcher.sln\Shell\MiniBuild\Command", null, cmd);
+            RegistryHelper.Write(@"VisualStudio.sln.14.0\Shell\MiniBuild", null, "一键编译");
+            RegistryHelper.Write(@"VisualStudio.sln.14.0\Shell\MiniBuild\Command", null, cmd);
         }
     }
+
+
 }

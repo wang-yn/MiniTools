@@ -46,12 +46,10 @@
   <ItemGroup>
     <Compile Include="Common\CommandLineHelper.cs" />
     <Compile Include="Common\DirectoryHelper.cs" />
-    <Compile Include="Common\Registry32.cs" />
+    <Compile Include="Common\RegistryHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="VS\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
